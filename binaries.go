@@ -2,44 +2,12 @@ package sdb
 
 import (
 	"archive/tar"
-	"encoding/binary"
 	"fmt"
-	"hash/crc32"
 	"io"
-	"io/ioutil"
 	"os"
 	"strings"
-)
 
-const (
-	binariesMagic          = 0x0a30420a
-	binariesFooterSize     = 16
-	binariesGenerationSize = 8
-	binariesSegmentSize    = 20
-	binariesReferenceSize  = 4
-)
-
-const (
-	binariesFooterChecksumOffset = 0
-	binariesFooterCountOffset    = 4
-	binariesFooterSizeOffset     = 8
-	binariesFooterMagicOffset    = 12
-)
-
-const (
-	binariesGenerationNumberOffset = 0
-	binariesGenerationCountOffset  = 4
-)
-
-const (
-	binariesSegmentMsbOffset   = 0
-	binariesSegmentLsbOffset   = 8
-	binariesSegmentCountOffset = 16
-)
-
-const (
-	binariesReferenceSizeOffset  = 0
-	binariesReferenceValueOffset = 4
+	"github.com/francescomari/sdb/binaries"
 )
 
 // PrintBinaries prints the content of the binary references index from the TAR
@@ -86,74 +54,20 @@ func PrintBinaries(path string, writer io.Writer, output OutputType) error {
 }
 
 func printBinariesText(reader io.Reader, writer io.Writer) error {
-	data, err := ioutil.ReadAll(reader)
+	var bns binaries.Binaries
 
-	if err != nil {
+	if _, err := bns.ReadFrom(reader); err != nil {
 		return err
 	}
 
-	n := len(data)
+	for _, generation := range bns.Generations {
+		fmt.Fprintf(writer, "%d\n", generation.Generation)
 
-	if n < binariesFooterSize {
-		return fmt.Errorf("Invalid data")
-	}
+		for _, segment := range generation.Segments {
+			fmt.Fprintf(writer, "    %016x%016x\n", segment.Msb, segment.Lsb)
 
-	var (
-		footer   = data[n-binariesFooterSize:]
-		checksum = int(binary.BigEndian.Uint32(footer[binariesFooterChecksumOffset:]))
-		count    = int(binary.BigEndian.Uint32(footer[binariesFooterCountOffset:]))
-		size     = int(binary.BigEndian.Uint32(footer[binariesFooterSizeOffset:]))
-		magic    = int(binary.BigEndian.Uint32(footer[binariesFooterMagicOffset:]))
-	)
-
-	if magic != binariesMagic {
-		return fmt.Errorf("Invalid magic")
-	}
-
-	if size < binariesFooterSize {
-		return fmt.Errorf("Invalid size")
-	}
-
-	if count < 0 {
-		return fmt.Errorf("Invalid count")
-	}
-
-	entries := data[n-size : n-binariesFooterSize]
-
-	if int(crc32.ChecksumIEEE(entries)) != checksum {
-		return fmt.Errorf("Invalid checksum")
-	}
-
-	for i := 0; i < count; i++ {
-		var (
-			generation = int(binary.BigEndian.Uint32(entries[binariesGenerationNumberOffset:]))
-			nSegments  = int(binary.BigEndian.Uint32(entries[binariesGenerationCountOffset:]))
-		)
-
-		entries = entries[binariesGenerationSize:]
-
-		fmt.Fprintf(writer, "%d\n", generation)
-
-		for j := 0; j < nSegments; j++ {
-			var (
-				msb         = binary.BigEndian.Uint64(entries[binariesSegmentMsbOffset:])
-				lsb         = binary.BigEndian.Uint64(entries[binariesSegmentLsbOffset:])
-				nReferences = int(binary.BigEndian.Uint32(entries[binariesSegmentCountOffset:]))
-			)
-
-			entries = entries[binariesSegmentSize:]
-
-			fmt.Fprintf(writer, "    %016x%016x\n", msb, lsb)
-
-			for k := 0; k < nReferences; k++ {
-				var (
-					size      = int(binary.BigEndian.Uint32(entries[binariesReferenceSizeOffset:]))
-					reference = entries[binariesReferenceValueOffset : binariesReferenceValueOffset+size]
-				)
-
-				entries = entries[binariesReferenceSize+size:]
-
-				fmt.Fprintf(writer, "        %s\n", string(reference))
+			for _, reference := range segment.References {
+				fmt.Fprintf(writer, "        %s\n", reference)
 			}
 		}
 	}

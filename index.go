@@ -2,13 +2,12 @@ package sdb
 
 import (
 	"archive/tar"
-	"encoding/binary"
 	"fmt"
-	"hash/crc32"
 	"io"
-	"io/ioutil"
 	"os"
 	"strings"
+
+	"github.com/francescomari/sdb/index"
 )
 
 const (
@@ -75,56 +74,14 @@ func PrintIndex(path string, writer io.Writer, output OutputType) error {
 }
 
 func printIndexText(reader io.Reader, writer io.Writer) error {
-	data, err := ioutil.ReadAll(reader)
+	var idx index.Index
 
-	if err != nil {
+	if _, err := idx.ReadFrom(reader); err != nil {
 		return err
 	}
 
-	n := len(data)
-
-	if n < indexFooterSize {
-		return fmt.Errorf("Invalid data")
-	}
-
-	var (
-		footer   = data[n-indexFooterSize:]
-		checksum = int(binary.BigEndian.Uint32(footer[indexFooterChecksumOffset:]))
-		count    = int(binary.BigEndian.Uint32(footer[indexFooterCountOffset:]))
-		size     = int(binary.BigEndian.Uint32(footer[indexFooterSizeOffset:]))
-		magic    = int(binary.BigEndian.Uint32(footer[indexFooterMagicOffset:]))
-	)
-
-	if magic != indexMagic {
-		return fmt.Errorf("Invalid magic %08x", magic)
-	}
-
-	if size < count*indexEntrySize+indexFooterSize {
-		return fmt.Errorf("Invalid count or size")
-	}
-
-	if n < count*indexEntrySize+indexFooterSize {
-		return fmt.Errorf("Invalid count or data size")
-	}
-
-	entries := data[n-indexFooterSize-count*indexEntrySize : n-indexFooterSize]
-
-	if int(crc32.ChecksumIEEE(entries)) != checksum {
-		return fmt.Errorf("Invalid checkusm")
-	}
-
-	for i := 0; i < count; i++ {
-		entry := entries[i*indexEntrySize:]
-
-		var (
-			msb        = binary.BigEndian.Uint64(entry[indexEntryMsbOffset:])
-			lsb        = binary.BigEndian.Uint64(entry[indexEntryLsbOffset:])
-			position   = int(binary.BigEndian.Uint32(entry[indexEntryPositionOffset:]))
-			size       = int(binary.BigEndian.Uint32(entry[indexEntrySizeOffset:]))
-			generation = int(binary.BigEndian.Uint32(entry[indexEntryGenerationOffset:]))
-		)
-
-		id := fmt.Sprintf("%016x%016x", msb, lsb)
+	for _, e := range idx.Entries {
+		id := fmt.Sprintf("%016x%016x", e.Msb, e.Lsb)
 
 		kind := "data"
 
@@ -132,7 +89,7 @@ func printIndexText(reader io.Reader, writer io.Writer) error {
 			kind = "bulk"
 		}
 
-		fmt.Fprintf(writer, "%s %s %8x %6d %6d\n", kind, id, position, size, generation)
+		fmt.Fprintf(writer, "%s %s %8x %6d %6d\n", kind, id, e.Position, e.Size, e.Generation)
 	}
 
 	return nil
