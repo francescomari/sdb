@@ -10,10 +10,14 @@ import (
 	"github.com/francescomari/sdb/binaries"
 )
 
+// BinariesEntryFilter locates the binary references index in a TAR file.
+func BinariesEntryFilter(name string) bool {
+	return strings.HasSuffix(name, ".brf")
+}
+
 // PrintBinaries prints the content of the binary references index from the TAR
-// file at 'path' to 'writer'. The desired output format is specified by
-// 'output'.
-func PrintBinaries(path string, writer io.Writer, output OutputType) error {
+// file at 'path' to 'writer'.
+func PrintBinaries(path string, writer io.Writer) error {
 	file, err := os.Open(path)
 
 	if err != nil {
@@ -35,19 +39,9 @@ func PrintBinaries(path string, writer io.Writer, output OutputType) error {
 			return err
 		}
 
-		if !strings.HasSuffix(header.Name, ".brf") {
-			continue
-		}
-
-		if output == OutputHex {
-			return printHex(reader, writer)
-		}
-
-		if output == OutputText {
+		if BinariesEntryFilter(header.Name) {
 			return printBinariesText(reader, writer)
 		}
-
-		return fmt.Errorf("Invalid output type")
 	}
 
 	return nil

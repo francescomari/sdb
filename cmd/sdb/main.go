@@ -176,7 +176,7 @@ func (t *tool) segment(args []string) error {
 		return nil
 	}
 
-	return sdb.PrintSegment(flags.Arg(0), flags.Arg(1), t.stdout, sdb.OutputHex)
+	return sdb.DumpEntry(flags.Arg(0), sdb.SegmentEntryFilter(flags.Arg(1)), t.stdout)
 }
 
 func (t *tool) index(args []string) error {
@@ -200,14 +200,16 @@ func (t *tool) index(args []string) error {
 		return nil
 	}
 
-	output, ok := decodeFormat(*format)
-
-	if !ok {
-		fmt.Fprintln(t.stderr, "Invalid output format")
-		return nil
+	if *format == formatHex {
+		return sdb.DumpEntry(flags.Arg(0), sdb.IndexEntryFilter, t.stdout)
 	}
 
-	return sdb.PrintIndex(flags.Arg(0), t.stdout, output)
+	if *format == formatText {
+		return sdb.PrintIndex(flags.Arg(0), t.stdout)
+	}
+
+	fmt.Fprintln(t.stderr, "Invalid output format")
+	return nil
 }
 
 func (t *tool) graph(args []string) error {
@@ -231,14 +233,16 @@ func (t *tool) graph(args []string) error {
 		return nil
 	}
 
-	output, ok := decodeFormat(*format)
-
-	if !ok {
-		fmt.Fprintln(t.stderr, "Invalid output format")
-		return nil
+	if *format == formatHex {
+		return sdb.DumpEntry(flags.Arg(0), sdb.GraphEntryFilter, t.stdout)
 	}
 
-	return sdb.PrintGraph(flags.Arg(0), t.stdout, output)
+	if *format == formatText {
+		return sdb.PrintGraph(flags.Arg(0), t.stdout)
+	}
+
+	fmt.Fprintln(t.stderr, "Invalid output format")
+	return nil
 }
 
 func (t *tool) binaries(args []string) error {
@@ -262,24 +266,14 @@ func (t *tool) binaries(args []string) error {
 		return nil
 	}
 
-	output, ok := decodeFormat(*format)
-
-	if !ok {
-		fmt.Fprintln(t.stderr, "Invalid output format")
-		return nil
+	if *format == formatHex {
+		return sdb.DumpEntry(flags.Arg(0), sdb.BinariesEntryFilter, t.stdout)
 	}
 
-	return sdb.PrintBinaries(flags.Arg(0), t.stdout, output)
-}
-
-func decodeFormat(name string) (sdb.OutputType, bool) {
-	if name == formatHex {
-		return sdb.OutputHex, true
+	if *format == formatText {
+		return sdb.PrintBinaries(flags.Arg(0), t.stdout)
 	}
 
-	if name == formatText {
-		return sdb.OutputText, true
-	}
-
-	return 0, false
+	fmt.Fprintln(t.stderr, "Invalid output format")
+	return nil
 }

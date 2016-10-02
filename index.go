@@ -10,30 +10,14 @@ import (
 	"github.com/francescomari/sdb/index"
 )
 
-const (
-	indexMagic      = 0x0a304b0a
-	indexFooterSize = 16
-	indexEntrySize  = 28
-)
-
-const (
-	indexFooterChecksumOffset = 0
-	indexFooterCountOffset    = 4
-	indexFooterSizeOffset     = 8
-	indexFooterMagicOffset    = 12
-)
-
-const (
-	indexEntryMsbOffset        = 0
-	indexEntryLsbOffset        = 8
-	indexEntryPositionOffset   = 16
-	indexEntrySizeOffset       = 20
-	indexEntryGenerationOffset = 24
-)
+// IndexEntryFilter locates the index in a TAR file.
+func IndexEntryFilter(name string) bool {
+	return strings.HasSuffix(name, ".idx")
+}
 
 // PrintIndex prints the content of the index from the TAR file at 'path' to
-// 'writer'. The desired output format is specified by 'output'.
-func PrintIndex(path string, writer io.Writer, output OutputType) error {
+// 'writer'
+func PrintIndex(path string, writer io.Writer) error {
 	file, err := os.Open(path)
 
 	if err != nil {
@@ -55,19 +39,9 @@ func PrintIndex(path string, writer io.Writer, output OutputType) error {
 			return err
 		}
 
-		if !strings.HasSuffix(header.Name, ".idx") {
-			continue
-		}
-
-		if output == OutputHex {
-			return printHex(reader, writer)
-		}
-
-		if output == OutputText {
+		if IndexEntryFilter(header.Name) {
 			return printIndexText(reader, writer)
 		}
-
-		return fmt.Errorf("Invalid output type")
 	}
 
 	return nil

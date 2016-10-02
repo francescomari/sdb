@@ -10,9 +10,14 @@ import (
 	"github.com/francescomari/sdb/graph"
 )
 
+// GraphEntryFilter locates the graph in a TAR file.
+func GraphEntryFilter(name string) bool {
+	return strings.HasSuffix(name, ".gph")
+}
+
 // PrintGraph prints the content of the graph from the TAR file at 'path' to
-// 'writer'. The desired output format is specified by 'output'.
-func PrintGraph(path string, writer io.Writer, output OutputType) error {
+// 'writer'.
+func PrintGraph(path string, writer io.Writer) error {
 	file, err := os.Open(path)
 
 	if err != nil {
@@ -34,19 +39,9 @@ func PrintGraph(path string, writer io.Writer, output OutputType) error {
 			return err
 		}
 
-		if !strings.HasSuffix(header.Name, ".gph") {
-			continue
-		}
-
-		if output == OutputHex {
-			return printHex(reader, writer)
-		}
-
-		if output == OutputText {
+		if GraphEntryFilter(header.Name) {
 			return printGraphText(reader, writer)
 		}
-
-		return fmt.Errorf("Invalid output type")
 	}
 
 	return nil
