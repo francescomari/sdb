@@ -178,17 +178,14 @@ func (t *tool) segment(args []string) error {
 		return nil
 	}
 
-	if *format == formatHex {
-		return sdb.DumpEntry(flags.Arg(0), sdb.SegmentEntryFilter(flags.Arg(1)), t.stdout)
+	f, err := readFormat(*format)
+
+	if err != nil {
+		fmt.Fprintln(t.stderr, err)
+		return nil
 	}
 
-	if *format == formatText {
-		return sdb.PrintSegment(flags.Arg(0), flags.Arg(1), t.stdout)
-	}
-
-	fmt.Fprintln(t.stderr, "Invalid output format")
-
-	return nil
+	return sdb.PrintSegment(flags.Arg(0), flags.Arg(1), f, t.stdout)
 }
 
 func (t *tool) index(args []string) error {
@@ -212,17 +209,14 @@ func (t *tool) index(args []string) error {
 		return nil
 	}
 
-	if *format == formatHex {
-		return sdb.DumpEntry(flags.Arg(0), sdb.IndexEntryFilter, t.stdout)
+	f, err := readFormat(*format)
+
+	if err != nil {
+		fmt.Fprintln(t.stderr, err)
+		return nil
 	}
 
-	if *format == formatText {
-		return sdb.PrintIndex(flags.Arg(0), t.stdout)
-	}
-
-	fmt.Fprintln(t.stderr, "Invalid output format")
-
-	return nil
+	return sdb.PrintIndex(flags.Arg(0), f, t.stdout)
 }
 
 func (t *tool) graph(args []string) error {
@@ -246,17 +240,14 @@ func (t *tool) graph(args []string) error {
 		return nil
 	}
 
-	if *format == formatHex {
-		return sdb.DumpEntry(flags.Arg(0), sdb.GraphEntryFilter, t.stdout)
+	f, err := readFormat(*format)
+
+	if err != nil {
+		fmt.Fprintln(t.stderr, f)
+		return nil
 	}
 
-	if *format == formatText {
-		return sdb.PrintGraph(flags.Arg(0), t.stdout)
-	}
-
-	fmt.Fprintln(t.stderr, "Invalid output format")
-
-	return nil
+	return sdb.PrintGraph(flags.Arg(0), f, t.stdout)
 }
 
 func (t *tool) binaries(args []string) error {
@@ -280,15 +271,23 @@ func (t *tool) binaries(args []string) error {
 		return nil
 	}
 
-	if *format == formatHex {
-		return sdb.DumpEntry(flags.Arg(0), sdb.BinariesEntryFilter, t.stdout)
+	f, err := readFormat(*format)
+
+	if err != nil {
+		fmt.Fprintln(t.stderr, err)
+		return nil
 	}
 
-	if *format == formatText {
-		return sdb.PrintBinaries(flags.Arg(0), t.stdout)
+	return sdb.PrintBinaries(flags.Arg(0), f, t.stdout)
+}
+
+func readFormat(s string) (sdb.Format, error) {
+	switch s {
+	case formatHex:
+		return sdb.FormatHex, nil
+	case formatText:
+		return sdb.FormatText, nil
+	default:
+		return 0, fmt.Errorf("Invalid format '%s'", s)
 	}
-
-	fmt.Fprintln(t.stderr, "Invalid output format")
-
-	return nil
 }
