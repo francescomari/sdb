@@ -167,6 +167,8 @@ func (t *tool) segment(args []string) error {
 		flags.PrintDefaults()
 	}
 
+	format := flags.String("format", "hex", "Output format (hex, text)")
+
 	if err := flags.Parse(args); err != nil {
 		return nil
 	}
@@ -176,7 +178,17 @@ func (t *tool) segment(args []string) error {
 		return nil
 	}
 
-	return sdb.DumpEntry(flags.Arg(0), sdb.SegmentEntryFilter(flags.Arg(1)), t.stdout)
+	if *format == formatHex {
+		return sdb.DumpEntry(flags.Arg(0), sdb.SegmentEntryFilter(flags.Arg(1)), t.stdout)
+	}
+
+	if *format == formatText {
+		return sdb.PrintSegment(flags.Arg(0), flags.Arg(1), t.stdout)
+	}
+
+	fmt.Fprintln(t.stderr, "Invalid output format")
+
+	return nil
 }
 
 func (t *tool) index(args []string) error {
@@ -209,6 +221,7 @@ func (t *tool) index(args []string) error {
 	}
 
 	fmt.Fprintln(t.stderr, "Invalid output format")
+
 	return nil
 }
 
@@ -242,6 +255,7 @@ func (t *tool) graph(args []string) error {
 	}
 
 	fmt.Fprintln(t.stderr, "Invalid output format")
+
 	return nil
 }
 
@@ -275,5 +289,6 @@ func (t *tool) binaries(args []string) error {
 	}
 
 	fmt.Fprintln(t.stderr, "Invalid output format")
+
 	return nil
 }
