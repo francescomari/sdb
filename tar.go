@@ -2,30 +2,72 @@ package sdb
 
 import (
 	"archive/tar"
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"strings"
 )
 
-// PrintEntries prints the name of the entries from the TAR file at 'path' to
-// 'writer'. The entries are printed in the same order as they are stored in the
-// TAR file.
-func PrintEntries(path string, writer io.Writer) error {
-	file, err := os.Open(path)
+// PrintEntries prints the name of the entries from the TAR file at 'p' to 'w'.
+// The entries are printed in the same order as they are stored in the TAR file.
+func PrintEntries(p string, w io.Writer) error {
+	return forEachEntry(p, printNameTo(w))
+}
+
+// DumpEntry prints to 'w' the hexdump of the first entry in the TAR file at 'p'
+// matching the criteria 'm'.
+func DumpEntry(p string, m func(string) bool, w io.Writer) error {
+	return onMatchingEntry(p, m, printHexTo(w))
+}
+
+func printNameTo(w io.Writer) handler {
+	return func(n string, _ io.Reader) error {
+		fmt.Fprintln(w, n)
+		return nil
+	}
+}
+
+func printHexTo(w io.Writer) handler {
+	return func(_ string, r io.Reader) error {
+		return printHex(r, w)
+	}
+}
+
+type handler func(n string, r io.Reader) error
+
+type matcher func(string) bool
+
+var errStop = errors.New("stop")
+
+func any(_ string) bool {
+	return true
+}
+
+func failWith(h handler, f error) handler {
+	return func(n string, r io.Reader) error {
+		if err := h(n, r); err != nil {
+			return err
+		}
+		return f
+	}
+}
+
+func forEachMatchingEntry(p string, m matcher, h handler) error {
+	f, err := os.Open(p)
 
 	if err != nil {
 		return err
 	}
 
-	defer file.Close()
+	defer f.Close()
 
-	reader := tar.NewReader(file)
+	r := tar.NewReader(f)
 
 	for {
-		header, err := reader.Next()
+		hdr, err := r.Next()
 
-		if header == nil {
+		if hdr == nil {
 			break
 		}
 
@@ -33,42 +75,28 @@ func PrintEntries(path string, writer io.Writer) error {
 			return err
 		}
 
-		fmt.Fprintln(writer, header.Name)
+		if m(hdr.Name) {
+			if err := h(hdr.Name, r); err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil
 }
 
-// DumpEntry prints to 'writer' the hexdump of the first entry in the TAR file
-// at 'path' matching the criteria 'filter'.
-func DumpEntry(path string, filter func(string) bool, writer io.Writer) error {
-	file, err := os.Open(path)
+func forEachEntry(p string, h handler) error {
+	return forEachMatchingEntry(p, any, h)
+}
 
-	if err != nil {
-		return err
+func onMatchingEntry(p string, m matcher, h handler) error {
+	err := forEachMatchingEntry(p, m, failWith(h, errStop))
+
+	if err == errStop {
+		return nil
 	}
 
-	defer file.Close()
-
-	reader := tar.NewReader(file)
-
-	for {
-		header, err := reader.Next()
-
-		if header == nil {
-			break
-		}
-
-		if err != nil {
-			return err
-		}
-
-		if filter(header.Name) {
-			return printHex(reader, writer)
-		}
-	}
-
-	return nil
+	return err
 }
 
 func entryNameToSegmentID(header string) string {

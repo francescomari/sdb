@@ -1,10 +1,8 @@
 package sdb
 
 import (
-	"archive/tar"
 	"fmt"
 	"io"
-	"os"
 	"regexp"
 	"strings"
 
@@ -22,108 +20,59 @@ func SegmentEntryFilter(id string) func(string) bool {
 }
 
 // PrintSegments lists the identifiers of every segment contained in the TAR
-// file at 'path' and prints them to 'writer'. The segment IDs are printed in
-// the same order as the correspodning entries appear in the TAR files.
-func PrintSegments(path string, writer io.Writer) error {
-	file, err := os.Open(path)
+// file at 'p' and prints them to 'w'. The segment IDs are printed in the same
+// order as the correspodning entries appear in the TAR files.
+func PrintSegments(p string, w io.Writer) error {
+	return forEachMatchingEntry(p, segmentEntryRegexp.MatchString, printSegmentNameTo(w))
+}
 
-	if err != nil {
-		return err
+func printSegmentNameTo(w io.Writer) handler {
+	return func(n string, _ io.Reader) error {
+		id := normalizeSegmentID(entryNameToSegmentID(n))
+
+		kind := "data"
+
+		if isBulkSegmentID(id) {
+			kind = "bulk"
+		}
+
+		fmt.Fprintf(w, "%s %s\n", kind, id)
+
+		return nil
 	}
-
-	defer file.Close()
-
-	reader := tar.NewReader(file)
-
-	for {
-		header, err := reader.Next()
-
-		if header == nil {
-			break
-		}
-
-		if err != nil {
-			return err
-		}
-
-		if segmentEntryRegexp.MatchString(header.Name) {
-			id := normalizeSegmentID(entryNameToSegmentID(header.Name))
-
-			kind := "data"
-
-			if isBulkSegmentID(id) {
-				kind = "bulk"
-			}
-
-			fmt.Fprintf(writer, "%s %s\n", kind, id)
-		}
-	}
-
-	return nil
 }
 
 // PrintSegment prints the content of the segment 'id' from the TAR file at
 // 'path' to 'writer'.
 func PrintSegment(path string, id string, writer io.Writer) error {
-	id = normalizeSegmentID(id)
+	return onMatchingEntry(path, SegmentEntryFilter(id), printSegmentTo(writer))
+}
 
-	if isBulkSegmentID(id) {
-		return fmt.Errorf("The ID refers to a bulk segment")
-	}
+func printSegmentTo(w io.Writer) handler {
+	return func(_ string, r io.Reader) error {
+		var s segment.Segment
 
-	file, err := os.Open(path)
-
-	if err != nil {
-		return err
-	}
-
-	defer file.Close()
-
-	reader := tar.NewReader(file)
-	filter := SegmentEntryFilter(id)
-
-	for {
-		header, err := reader.Next()
-
-		if header == nil {
-			break
-		}
-
-		if err != nil {
+		if _, err := s.ReadFrom(r); err != nil {
 			return err
 		}
 
-		if filter(header.Name) {
-			return printSegmentText(reader, writer)
+		fmt.Fprintf(w, "Version    %d\n", s.Version)
+		fmt.Fprintf(w, "Generation %d\n", s.Generation)
+
+		fmt.Fprintf(w, "References\n")
+
+		for i, r := range s.References {
+			fmt.Fprintf(w, "    %4d %016x%016x\n", i+1, r.Msb, r.Lsb)
 		}
+
+		fmt.Fprintf(w, "Records\n")
+
+		for _, r := range s.Records {
+			fmt.Fprintf(w, "    %08x %-10s %08x\n", r.Number, recordTypeString(r.Type), r.Offset)
+		}
+
+		return nil
 	}
-
-	return nil
-}
-
-func printSegmentText(reader io.Reader, writer io.Writer) error {
-	var s segment.Segment
-
-	if _, err := s.ReadFrom(reader); err != nil {
-		return err
-	}
-
-	fmt.Fprintf(writer, "Version    %d\n", s.Version)
-	fmt.Fprintf(writer, "Generation %d\n", s.Generation)
-
-	fmt.Fprintf(writer, "References\n")
-
-	for i, r := range s.References {
-		fmt.Fprintf(writer, "    %4d %016x%016x\n", i+1, r.Msb, r.Lsb)
-	}
-
-	fmt.Fprintf(writer, "Records\n")
-
-	for _, r := range s.Records {
-		fmt.Fprintf(writer, "    %08x %-10s %08x\n", r.Number, recordTypeString(r.Type), r.Offset)
-	}
-
-	return nil
 }
 
 func isBulkSegmentID(id string) bool {

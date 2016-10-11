@@ -1,10 +1,8 @@
 package sdb
 
 import (
-	"archive/tar"
 	"fmt"
 	"io"
-	"os"
 	"strings"
 
 	"github.com/francescomari/sdb/binaries"
@@ -16,55 +14,31 @@ func BinariesEntryFilter(name string) bool {
 }
 
 // PrintBinaries prints the content of the binary references index from the TAR
-// file at 'path' to 'writer'.
-func PrintBinaries(path string, writer io.Writer) error {
-	file, err := os.Open(path)
+// file at 'p' to 'w'.
+func PrintBinaries(p string, w io.Writer) error {
+	return onMatchingEntry(p, BinariesEntryFilter, printBinariesTo(w))
+}
 
-	if err != nil {
-		return err
-	}
+func printBinariesTo(w io.Writer) handler {
+	return func(_ string, r io.Reader) error {
+		var bns binaries.Binaries
 
-	defer file.Close()
-
-	reader := tar.NewReader(file)
-
-	for {
-		header, err := reader.Next()
-
-		if header == nil {
-			break
-		}
-
-		if err != nil {
+		if _, err := bns.ReadFrom(r); err != nil {
 			return err
 		}
 
-		if BinariesEntryFilter(header.Name) {
-			return printBinariesText(reader, writer)
-		}
-	}
+		for _, generation := range bns.Generations {
+			fmt.Fprintf(w, "%d\n", generation.Generation)
 
-	return nil
-}
+			for _, segment := range generation.Segments {
+				fmt.Fprintf(w, "    %016x%016x\n", segment.Msb, segment.Lsb)
 
-func printBinariesText(reader io.Reader, writer io.Writer) error {
-	var bns binaries.Binaries
-
-	if _, err := bns.ReadFrom(reader); err != nil {
-		return err
-	}
-
-	for _, generation := range bns.Generations {
-		fmt.Fprintf(writer, "%d\n", generation.Generation)
-
-		for _, segment := range generation.Segments {
-			fmt.Fprintf(writer, "    %016x%016x\n", segment.Msb, segment.Lsb)
-
-			for _, reference := range segment.References {
-				fmt.Fprintf(writer, "        %s\n", reference)
+				for _, reference := range segment.References {
+					fmt.Fprintf(w, "        %s\n", reference)
+				}
 			}
 		}
-	}
 
-	return nil
+		return nil
+	}
 }
