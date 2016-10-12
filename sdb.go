@@ -1,6 +1,18 @@
 package sdb
 
-import "io"
+import (
+	"fmt"
+	"io"
+)
+
+// PrintTars prints the names of the active TAR files in 'd' to 'w''. If the
+// 'all' parameter is 'true', it prints the names of both active and non-active
+// TAR files in 'directory' instead.
+func PrintTars(d string, all bool, w io.Writer) error {
+	return forEachTarFile(d, all, func(n string) {
+		fmt.Fprintln(w, n)
+	})
+}
 
 // PrintBinaries prints the content of the binary references index from the TAR
 // file at 'p' to 'w'.
