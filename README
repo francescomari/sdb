@@ -98,7 +98,8 @@ List segment IDs in a TAR file
 Show the content of a segment
 
   The 'segment' command shows you the hexdump of a segment. You need to specify
-  the TAR file the segment belongs to and its ID.
+  the TAR file the segment belongs to and its ID. It is possible to access to a
+  more readable representation by using the '-format' flag.
 
     $ sdb segment data00000a.tar 0ce1d7f06f464753a42c2374852990c8
 
