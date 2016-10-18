@@ -1,4 +1,4 @@
-package sdb
+package main
 
 import (
 	"regexp"

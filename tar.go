@@ -1,4 +1,4 @@
-package sdb
+package main
 
 import (
 	"archive/tar"
@@ -15,26 +15,19 @@ var errStop = errors.New("stop")
 
 func forEachMatchingEntry(p string, m matcher, h handler) error {
 	f, err := os.Open(p)
-
 	if err != nil {
 		return err
 	}
-
 	defer f.Close()
-
 	r := tar.NewReader(f)
-
 	for {
 		hdr, err := r.Next()
-
 		if hdr == nil {
 			break
 		}
-
 		if err != nil {
 			return err
 		}
-
 		if m(hdr.Name) {
 			if err := h(hdr.Name, r); err == errStop {
 				return nil
@@ -43,7 +36,6 @@ func forEachMatchingEntry(p string, m matcher, h handler) error {
 			}
 		}
 	}
-
 	return nil
 }
 
