@@ -8,7 +8,7 @@ Installing
   To start using the Segment Debugger, install Go and run 'go get' as shown
   below.
 
-    $ go get github.com/francescomari/sdb/...
+    $ go get -u github.com/francescomari/sdb
 
   This will retrieve the library and install the 'sdb' command line utility into
   your '$GOBIN' path.
