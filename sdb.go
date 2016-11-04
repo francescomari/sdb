@@ -11,6 +11,18 @@ const (
 	programName = "sdb"
 )
 
+func main() {
+	t := tool{
+		stdin:  os.Stdin,
+		stdout: os.Stdout,
+		stderr: os.Stderr,
+	}
+	if err := t.run(os.Args); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
+}
+
 type format int
 
 const (
@@ -18,18 +30,39 @@ const (
 	formatText
 )
 
-func main() {
-	t := tool{os.Stdin, os.Stdout, os.Stderr}
-	if err := t.run(os.Args); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+const (
+	formatHexString  = "hex"
+	formatTextString = "text"
+)
+
+func (f *format) String() string {
+	switch *f {
+	case formatHex:
+		return formatHexString
+	case formatText:
+		return formatTextString
+	default:
+		panic("Invalid format")
 	}
+}
+
+func (f *format) Set(s string) error {
+	switch s {
+	case formatHexString:
+		*f = formatHex
+	case formatTextString:
+		*f = formatText
+	default:
+		return fmt.Errorf("Invalid format '%s'", s)
+	}
+	return nil
 }
 
 type tool struct {
 	stdin  *os.File
 	stdout *os.File
 	stderr *os.File
+	flags  *flag.FlagSet
 }
 
 func (t *tool) run(args []string) error {
@@ -71,128 +104,114 @@ func (t *tool) commands(reason string) {
 }
 
 func (t *tool) tars(args []string) error {
-	flags := t.newFlagSet("tars", "[-all] [directory]")
-	all := flags.Bool("all", false, "List active and non-active TAR files")
-	t.parseFlags(flags, args)
+	t.initFlags("tars", "[-all] [directory]")
+	all := t.boolFlag("all", false, "List active and non-active TAR files")
+	t.parseFlags(args)
 	directory, err := os.Getwd()
 	if err != nil {
 		return err
 	}
-	if flags.NArg() > 0 {
-		directory = flags.Arg(0)
+	if t.nArgs() > 0 {
+		directory = t.arg(0)
 	}
 	return printTars(directory, *all, t.stdout)
 }
 
 func (t *tool) entries(args []string) error {
-	flags := t.newFlagSet("entries", "file")
-	t.parseFlags(flags, args)
-	if flags.NArg() != 1 {
+	t.initFlags("entries", "file")
+	t.parseFlags(args)
+	if t.nArgs() != 1 {
 		fmt.Fprintln(t.stderr, "Invalid number of arguments")
 		return nil
 	}
-	return printEntries(flags.Arg(0), t.stdout)
+	return printEntries(t.arg(0), t.stdout)
 }
 
 func (t *tool) segments(args []string) error {
-	flags := t.newFlagSet("segments", "file")
-	t.parseFlags(flags, args)
-	if flags.NArg() != 1 {
+	t.initFlags("segments", "file")
+	t.parseFlags(args)
+	if t.nArgs() != 1 {
 		fmt.Fprintln(t.stderr, "Invalid number of arguments")
 		return nil
 	}
-	return printSegments(flags.Arg(0), t.stdout)
+	return printSegments(t.arg(0), t.stdout)
 }
 
 func (t *tool) segment(args []string) error {
-	flags := t.newFlagSet("segment", "[-format] file")
-	format := flags.String("format", "hex", "Output format (hex, text)")
-	t.parseFlags(flags, args)
-	if flags.NArg() != 2 {
+	t.initFlags("segment", "[-format] file")
+	f := t.formatFlag("format", "Output format (hex, text)")
+	t.parseFlags(args)
+	if t.nArgs() != 2 {
 		fmt.Fprintln(t.stderr, "Invalid number of arguments")
 		return nil
 	}
-	f, err := readFormat(*format)
-	if err != nil {
-		fmt.Fprintln(t.stderr, err)
-		return nil
-	}
-	return printSegment(flags.Arg(0), flags.Arg(1), f, t.stdout)
+	return printSegment(t.arg(0), t.arg(1), *f, t.stdout)
 }
 
 func (t *tool) index(args []string) error {
-	flags := t.newFlagSet("index", "[-format] file")
-	format := flags.String("format", "hex", "Output format (hex, text)")
-	t.parseFlags(flags, args)
-	if flags.NArg() != 1 {
+	t.initFlags("index", "[-format] file")
+	f := t.formatFlag("format", "Output format (hex, text)")
+	t.parseFlags(args)
+	if t.nArgs() != 1 {
 		fmt.Fprintln(t.stderr, "Invalid number of arguments")
 		return nil
 	}
-	f, err := readFormat(*format)
-	if err != nil {
-		fmt.Fprintln(t.stderr, err)
-		return nil
-	}
-	return printIndex(flags.Arg(0), f, t.stdout)
+	return printIndex(t.arg(0), *f, t.stdout)
 }
 
 func (t *tool) graph(args []string) error {
-	flags := t.newFlagSet("graph", "[-format] file")
-	format := flags.String("format", "hex", "Output format (hex, text)")
-	t.parseFlags(flags, args)
-	if flags.NArg() != 1 {
+	t.initFlags("graph", "[-format] file")
+	f := t.formatFlag("format", "Output format (hex, text)")
+	t.parseFlags(args)
+	if t.nArgs() != 1 {
 		fmt.Fprintln(t.stderr, "Invalid number of arguments")
 		return nil
 	}
-	f, err := readFormat(*format)
-	if err != nil {
-		fmt.Fprintln(t.stderr, f)
-		return nil
-	}
-	return printGraph(flags.Arg(0), f, t.stdout)
+	return printGraph(t.arg(0), *f, t.stdout)
 }
 
 func (t *tool) binaries(args []string) error {
-	flags := t.newFlagSet("binaries", "[-format] file")
-	format := flags.String("format", "hex", "Output format (hex, text)")
-	t.parseFlags(flags, args)
-	if flags.NArg() != 1 {
+	t.initFlags("binaries", "[-format] file")
+	f := t.formatFlag("format", "Output format (hex, text)")
+	t.parseFlags(args)
+	if t.nArgs() != 1 {
 		fmt.Fprintln(t.stderr, "Invalid number of arguments")
 		return nil
 	}
-	f, err := readFormat(*format)
-	if err != nil {
-		fmt.Fprintln(t.stderr, err)
-		return nil
-	}
-	return printBinaries(flags.Arg(0), f, t.stdout)
+	return printBinaries(t.arg(0), *f, t.stdout)
 }
 
-func (t *tool) newFlagSet(cmd, usage string) *flag.FlagSet {
-	flags := flag.NewFlagSet(cmd, flag.ContinueOnError)
-	flags.SetOutput(t.stderr)
-	flags.Usage = func() {
+func (t *tool) initFlags(cmd, usage string) {
+	t.flags = flag.NewFlagSet(cmd, flag.ContinueOnError)
+	t.flags.SetOutput(t.stderr)
+	t.flags.Usage = func() {
 		fmt.Fprintf(t.stderr, "Usage: %s %s [-help] %s\n", programName, cmd, usage)
-		flags.PrintDefaults()
+		t.flags.PrintDefaults()
 	}
-	return flags
 }
 
-func (t *tool) parseFlags(fs *flag.FlagSet, args []string) {
-	if err := fs.Parse(args); err != nil {
+func (t *tool) boolFlag(name string, value bool, usage string) *bool {
+	return t.flags.Bool(name, value, usage)
+}
+
+func (t *tool) formatFlag(name, usage string) *format {
+	f := new(format)
+	t.flags.Var(f, name, usage)
+	return f
+}
+
+func (t *tool) parseFlags(args []string) {
+	if err := t.flags.Parse(args); err != nil {
 		os.Exit(1)
 	}
 }
 
-func readFormat(s string) (format, error) {
-	switch s {
-	case "hex":
-		return formatHex, nil
-	case "text":
-		return formatText, nil
-	default:
-		return 0, fmt.Errorf("Invalid format '%s'", s)
-	}
+func (t *tool) nArgs() int {
+	return t.flags.NArg()
+}
+
+func (t *tool) arg(i int) string {
+	return t.flags.Arg(i)
 }
 
 func printTars(d string, all bool, w io.Writer) error {
