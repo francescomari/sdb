@@ -75,6 +75,8 @@ const (
 	RecordTypeTemplate
 	// RecordTypeNode is the type of a node record.
 	RecordTypeNode
+	// RecordTypeBlobID is the type of a binary object identifier.
+	RecordTypeBlobID
 )
 
 // ReadFrom reads the content of the segment from a 'reader'. It returns the

@@ -184,6 +184,8 @@ func recordType(t segment.RecordType) string {
 		return "template"
 	case segment.RecordTypeValue:
 		return "value"
+	case segment.RecordTypeBlobID:
+		return "binary"
 	default:
 		return "unknown"
 	}
