@@ -1,6 +1,6 @@
 # Segment Debugger
 
-The Segment Debugger is a collection of utilities to inspect a repository created by Apache Jackrabbit Oak's Segment Store.
+The Segment Debugger is a collection of utilities to inspect a repository created by the [Segment Store](http://jackrabbit.apache.org/oak/docs/nodestore/segment/overview.html), a component in [Apache Jackrabbit Oak](http://jackrabbit.apache.org/oak/).
 
 ## Installing
 
