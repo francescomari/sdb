@@ -118,16 +118,17 @@ By default, the hexdump of the index is shown.
 It is possible to access to a more readable representation by using the `-format` flag.
 
 ```
-$ sdb index -format text data00000a.tar
-data 87a95464f29b4160a32d208eb981a645   1c1400 262144      1
-data 98997705a85d485aafeea9ae9793958f   141000 262144      1
-data 9e5eba1cee174e9faa807ef9b8b1c9ed    40800 262144      0
-data c91b6a65fb06475aa751579a47dce7e3   100e00 261984      1
-data d492d86cc5a544a7ad69382443777720      200    128      0
-data d98ac859618c4b33a1d9de4e9ea7993a      600 262144      0
-data 4e5e1704d65b4506adb462ce242e6ba5   181200 262144      1
-data 588093be3f6f4bd8a740873d5e2ee755    80a00 262144      0
-data 68f948dd3ca7488ea61ab4f658c75f81    c0c00 262144      0
+$ sdb index -format text data00000a.tar | head
+data 80120c8f7d984b81a9cda2b4aeaf5686 5de8a00 262112 0
+data 8017fadcca4e4398a92efb64f0c41b19 241800 262096 0
+data 828439805d274f4ea982fd8e93bcc1d1 4fa8e00 250192 0
+data 83019b303a8a4c1aa20cbad77aab559a 54ffc00 262112 0
+data 83c7fcb87cdf428faa2838b8d81dc2a3 51a5c00 262112 0
+data 83e08e3c8eba497bacdb9c6fb10c8785 59aa800 261072 0
+data 84703034cf834936ad206d11b9773a3d 2ddd800 257648 0
+data 85837008c5624164a6268d76b00f6bab 1c9a800 258160 0
+data 8633a21403c44cd0a026ec233cc683be 438da00 262096 0
+data 86a132a870cc4a83addf449c4ec404b8 4904800 262096 0
 ```
 
 The output shows the following columns: the type of the segment, the segment ID, the hexadecimal offset of the segment in the TAR file, the size of the segment, and its generation.
@@ -139,28 +140,17 @@ By default, the hexdump of the graph is shown.
 It is possible to access to a more readable representation by using the `-format` flag.
 
 ```
-$ sdb graph -format text data00000a.tar
-87a95464f29b4160a32d208eb981a645
-    4e5e1704d65b4506adb462ce242e6ba5
-    c91b6a65fb06475aa751579a47dce7e3
-4e5e1704d65b4506adb462ce242e6ba5
-    c91b6a65fb06475aa751579a47dce7e3
-    98997705a85d485aafeea9ae9793958f
-68f948dd3ca7488ea61ab4f658c75f81
-    d98ac859618c4b33a1d9de4e9ea7993a
-    588093be3f6f4bd8a740873d5e2ee755
-    9e5eba1cee174e9faa807ef9b8b1c9ed
-98997705a85d485aafeea9ae9793958f
-    c91b6a65fb06475aa751579a47dce7e3
-9e5eba1cee174e9faa807ef9b8b1c9ed
-    d98ac859618c4b33a1d9de4e9ea7993a
-588093be3f6f4bd8a740873d5e2ee755
-    d98ac859618c4b33a1d9de4e9ea7993a
-    9e5eba1cee174e9faa807ef9b8b1c9ed
+$ sdb graph -format text data00000a.tar | head -n 5
+4535f3ee3bb543f5a682f9b64e5d8bf2 6c98954462fa4bd7ab50a15f064f864d
+4535f3ee3bb543f5a682f9b64e5d8bf2 d012d6f392814ba5ad6bc0c3013ce12e
+16ae8fb02f0a4e0faa49a281e98d8d5e 4535f3ee3bb543f5a682f9b64e5d8bf2
+16ae8fb02f0a4e0faa49a281e98d8d5e 94bdb06b064c4f5ba13566a257ba99ef
+16ae8fb02f0a4e0faa49a281e98d8d5e ca615810fd7b4a7ca33c9b1a76b8fbeb
 ```
 
 The output shows a graph represented as an adjacency list.
-In the output above, segment `87a95464...` has two edges directed to the segments `4e5e1704...`  and `c91b6a65...`.
+In the output above, the first two lines show that segment `4535f3ee...` has two edges directed to the segments `6c989544...`  and `d012d6f3...`.
+The following lines show three edges directed from segment `16ae8fb0..` towards segments `4535f3ee...`, `94bdb06b...` and `ca615810`.
 
 ## Show the content of the binary references index
 
@@ -169,13 +159,16 @@ By default, the hexdump of the index is shown.
 It is possible to access to a more readable representation by using the `-format` flag.
 
 ```
-$ sdb binaries -format text data00000a.tar
-0
-    2bfba76dfcc94edca446e0d33273710f
-        I45961cb4083e9cb3111b8814ce558dcd0e87fe97#2097152
+$ sdb binaries -format text data00000a.tar | head -n 5
+0 12c552d1d67f4b4fa22a61c5818286a2 f20cc9f7902d6facdd7a9e260dc686d144de5ca3#108232
+0 12c552d1d67f4b4fa22a61c5818286a2 4ab8c9485e1c13410eb684863f333414e0e2973d#37470
+0 45ef53df2d094fcea8336b1fdc7c3e49 360636479c1c3b1b47d2174d4432224fc6193ed4#22090
+0 45ef53df2d094fcea8336b1fdc7c3e49 9e56c46ff9b64986f491c53e0f625fa1fd26daff#84533
+0 5666923c93a54d21a9a36cb3372a890b dab128f67d237c980e5770ee045c38e36afa1327#19764
 ```
 
-The output shows external binary references grouped by segment first and generation next.
-The example above shows that the TAR file contains only segments of generation `0`.
-One of those segments is `2bfba76d....` This segment contains only one binary reference, `I45961cb4...`.
-
+The output shows a list of external binary references.
+Every line contains the generation of the segment, the segment ID and the identifier of the binary reference.
+The example above shows only segments of generation `0`.
+One of those segments is `12c552d1...`.
+This segment has two references to the binaries identified by `f20cc9f7...` and `4ab8c948...`.

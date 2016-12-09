@@ -38,12 +38,10 @@ func doPrintBinariesTo(w io.Writer) handler {
 		if _, err := bns.ReadFrom(r); err != nil {
 			return err
 		}
-		for _, generation := range bns.Generations {
-			fmt.Fprintf(w, "%d\n", generation.Generation)
-			for _, segment := range generation.Segments {
-				fmt.Fprintf(w, "    %s\n", segmentID(segment.Msb, segment.Lsb))
-				for _, reference := range segment.References {
-					fmt.Fprintf(w, "        %s\n", reference)
+		for _, g := range bns.Generations {
+			for _, s := range g.Segments {
+				for _, r := range s.References {
+					fmt.Fprintf(w, "%d %s %s\n", g.Generation, segmentID(s.Msb, s.Lsb), r)
 				}
 			}
 		}
@@ -68,10 +66,9 @@ func doPrintGraphTo(w io.Writer) handler {
 		if _, err := gph.ReadFrom(r); err != nil {
 			return nil
 		}
-		for _, entry := range gph.Entries {
-			fmt.Fprintf(w, "%s\n", segmentID(entry.Msb, entry.Lsb))
-			for _, reference := range entry.References {
-				fmt.Fprintf(w, "    %s\n", segmentID(reference.Msb, reference.Lsb))
+		for _, e := range gph.Entries {
+			for _, r := range e.References {
+				fmt.Fprintf(w, "%s %s\n", segmentID(e.Msb, e.Lsb), segmentID(r.Msb, r.Lsb))
 			}
 		}
 		return nil
@@ -97,7 +94,7 @@ func doPrintIndexTo(w io.Writer) handler {
 		}
 		for _, e := range idx.Entries {
 			id := segmentID(e.Msb, e.Lsb)
-			fmt.Fprintf(w, "%s %s %8x %6d %6d\n", segmentType(id), id, e.Position, e.Size, e.Generation)
+			fmt.Fprintf(w, "%s %s %x %d %d\n", segmentType(id), id, e.Position, e.Size, e.Generation)
 		}
 		return nil
 	}
@@ -128,15 +125,13 @@ func doPrintSegmentTo(w io.Writer) handler {
 		if _, err := s.ReadFrom(r); err != nil {
 			return err
 		}
-		fmt.Fprintf(w, "Version    %d\n", s.Version)
-		fmt.Fprintf(w, "Generation %d\n", s.Generation)
-		fmt.Fprintf(w, "References\n")
+		fmt.Fprintf(w, "version %d\n", s.Version)
+		fmt.Fprintf(w, "generation %d\n", s.Generation)
 		for i, r := range s.References {
-			fmt.Fprintf(w, "    %4d %s\n", i+1, segmentID(r.Msb, r.Lsb))
+			fmt.Fprintf(w, "reference %d %s\n", i+1, segmentID(r.Msb, r.Lsb))
 		}
-		fmt.Fprintf(w, "Records\n")
 		for _, r := range s.Records {
-			fmt.Fprintf(w, "    %08x %-10s %08x\n", r.Number, recordType(r.Type), r.Offset)
+			fmt.Fprintf(w, "record %x %s %x\n", r.Number, recordType(r.Type), r.Offset)
 		}
 		return nil
 	}
