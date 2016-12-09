@@ -26,8 +26,8 @@ func main() {
 type format int
 
 const (
-	formatHex format = iota
-	formatText
+	formatText format = iota
+	formatHex
 )
 
 const (
@@ -139,7 +139,7 @@ func (t *tool) segments(args []string) error {
 
 func (t *tool) segment(args []string) error {
 	t.initFlags("segment", "[-format] file segment")
-	f := t.formatFlag("format", "Output format (hex, text)")
+	f := t.formatFlag("format", "Output format (text, hex)")
 	t.parseFlags(args)
 	if t.nArgs() != 2 {
 		fmt.Fprintln(t.stderr, "Invalid number of arguments")
@@ -150,7 +150,7 @@ func (t *tool) segment(args []string) error {
 
 func (t *tool) index(args []string) error {
 	t.initFlags("index", "[-format] file")
-	f := t.formatFlag("format", "Output format (hex, text)")
+	f := t.formatFlag("format", "Output format (text, hex)")
 	t.parseFlags(args)
 	if t.nArgs() != 1 {
 		fmt.Fprintln(t.stderr, "Invalid number of arguments")
@@ -161,7 +161,7 @@ func (t *tool) index(args []string) error {
 
 func (t *tool) graph(args []string) error {
 	t.initFlags("graph", "[-format] file")
-	f := t.formatFlag("format", "Output format (hex, text)")
+	f := t.formatFlag("format", "Output format (text, hex)")
 	t.parseFlags(args)
 	if t.nArgs() != 1 {
 		fmt.Fprintln(t.stderr, "Invalid number of arguments")
@@ -172,7 +172,7 @@ func (t *tool) graph(args []string) error {
 
 func (t *tool) binaries(args []string) error {
 	t.initFlags("binaries", "[-format] file")
-	f := t.formatFlag("format", "Output format (hex, text)")
+	f := t.formatFlag("format", "Output format (text, hex)")
 	t.parseFlags(args)
 	if t.nArgs() != 1 {
 		fmt.Fprintln(t.stderr, "Invalid number of arguments")

@@ -105,20 +105,45 @@ data 4e815f3e9b23429aa0ee4b967c7566c1
 
 The `segment` command shows you the hexdump of a segment.
 You need to specify the TAR file the segment belongs to and its ID.
-It is possible to access to a more readable representation by using the `-format` flag.
+It is possible to access a hexdump of the segment by using the `-format` flag.
 
 ```
 $ sdb segment data00000a.tar 0ce1d7f06f464753a42c2374852990c8
+version 12
+generation 0
+reference 1 9bfa18e9bbd04ae2ab00451f185b17fe
+reference 2 195aa442cfbc4fbea1157288e94763ad
+...
+reference 27 c3857c61941044aba69df3e35c519728
+record 0 value 3ffd0
+record 1 bucket 3ffa0
+...
+record 16 node 3fcd8
 ```
+
+The output shows a readable representation of the fields of the segment.
+The name of the field is the first item printed on every line.
+The following fields are supported:
+* `version`
+The version of the segment.
+* `generation`
+The generation this segment belongs to.
+* `reference`
+A multi-value field containing references to other segments.
+For every reference, its number and the corresponding segment is shown.
+* `record`
+A multi-value field containing pointers to the records in this segment.
+For every record, its logical number, type and offset is shown.
+The offset of the record is unnormalized and relative from the end of the segment.
+The type of the record is a string that can assume the values `block`, `list`, `bucket`, `branch`, `leaf`, `node`, `template`, `value`, `binary` and `unknown`.
 
 ## Show the content of the index
 
 The `index` command prints the content of the TAR index.
-By default, the hexdump of the index is shown.
-It is possible to access to a more readable representation by using the `-format` flag.
+It is possible to access a hexdump of the index by using the `-format` flag.
 
 ```
-$ sdb index -format text data00000a.tar | head
+$ sdb index data00000a.tar | head
 data 80120c8f7d984b81a9cda2b4aeaf5686 5de8a00 262112 0
 data 8017fadcca4e4398a92efb64f0c41b19 241800 262096 0
 data 828439805d274f4ea982fd8e93bcc1d1 4fa8e00 250192 0
@@ -136,11 +161,10 @@ The output shows the following columns: the type of the segment, the segment ID,
 ## Show the content of the graph
 
 The `graph` command prints the content of the TAR graph.
-By default, the hexdump of the graph is shown.
-It is possible to access to a more readable representation by using the `-format` flag.
+It is possible to access a hexdump of the graph by using the `-format` flag.
 
 ```
-$ sdb graph -format text data00000a.tar | head -n 5
+$ sdb graph data00000a.tar | head -n 5
 4535f3ee3bb543f5a682f9b64e5d8bf2 6c98954462fa4bd7ab50a15f064f864d
 4535f3ee3bb543f5a682f9b64e5d8bf2 d012d6f392814ba5ad6bc0c3013ce12e
 16ae8fb02f0a4e0faa49a281e98d8d5e 4535f3ee3bb543f5a682f9b64e5d8bf2
@@ -155,8 +179,7 @@ The following lines show three edges directed from segment `16ae8fb0..` towards 
 ## Show the content of the binary references index
 
 The `binaries` command prints the content of the binary references index of a TAR file.
-By default, the hexdump of the index is shown.
-It is possible to access to a more readable representation by using the `-format` flag.
+It is possible to access a hexdump of the binary references index by using the `-format` flag.
 
 ```
 $ sdb binaries -format text data00000a.tar | head -n 5
