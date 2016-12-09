@@ -138,7 +138,7 @@ func (t *tool) segments(args []string) error {
 }
 
 func (t *tool) segment(args []string) error {
-	t.initFlags("segment", "[-format] file")
+	t.initFlags("segment", "[-format] file segment")
 	f := t.formatFlag("format", "Output format (hex, text)")
 	t.parseFlags(args)
 	if t.nArgs() != 2 {
