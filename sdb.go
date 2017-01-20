@@ -14,7 +14,7 @@ const (
 func main() {
 	var t tool
 	if len(os.Args) < 2 {
-		t.commands("No command specified")
+		commands("No command specified")
 		os.Exit(1)
 	}
 	cmd := os.Args[1]
@@ -36,13 +36,24 @@ func main() {
 		fn = t.binaries
 	}
 	if fn == nil {
-		t.commands(fmt.Sprintf("Invalid command '%s'", cmd))
+		commands(fmt.Sprintf("Invalid command '%s'", cmd))
 		os.Exit(1)
 	}
 	if err := fn(os.Args[2:]); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+}
+
+func commands(reason string) {
+	fmt.Fprintf(os.Stderr, "%s. Available commands:\n", reason)
+	fmt.Fprintf(os.Stderr, "    tars        List active and inactive TAR files\n")
+	fmt.Fprintf(os.Stderr, "    entries     List the entries of a TAR file\n")
+	fmt.Fprintf(os.Stderr, "    segments    List the IDs of the segments in a TAR file\n")
+	fmt.Fprintf(os.Stderr, "    segment     Print the content of a segment\n")
+	fmt.Fprintf(os.Stderr, "    index       Print the content of a TAR index\n")
+	fmt.Fprintf(os.Stderr, "    graph       Print the content of a TAR graph\n")
+	fmt.Fprintf(os.Stderr, "    binaries    Print the content of a TAR binary index\n")
 }
 
 type format int
@@ -82,17 +93,6 @@ func (f *format) Set(s string) error {
 
 type tool struct {
 	flags *flag.FlagSet
-}
-
-func (t *tool) commands(reason string) {
-	fmt.Fprintf(os.Stderr, "%s. Available commands:\n", reason)
-	fmt.Fprintf(os.Stderr, "    tars        List active and inactive TAR files\n")
-	fmt.Fprintf(os.Stderr, "    entries     List the entries of a TAR file\n")
-	fmt.Fprintf(os.Stderr, "    segments    List the IDs of the segments in a TAR file\n")
-	fmt.Fprintf(os.Stderr, "    segment     Print the content of a segment\n")
-	fmt.Fprintf(os.Stderr, "    index       Print the content of a TAR index\n")
-	fmt.Fprintf(os.Stderr, "    graph       Print the content of a TAR graph\n")
-	fmt.Fprintf(os.Stderr, "    binaries    Print the content of a TAR binary index\n")
 }
 
 func (t *tool) tars(args []string) error {
