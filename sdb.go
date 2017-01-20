@@ -12,11 +12,7 @@ const (
 )
 
 func main() {
-	t := tool{
-		stdin:  os.Stdin,
-		stdout: os.Stdout,
-		stderr: os.Stderr,
-	}
+	var t tool
 	if err := t.run(os.Args); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
@@ -59,10 +55,7 @@ func (f *format) Set(s string) error {
 }
 
 type tool struct {
-	stdin  *os.File
-	stdout *os.File
-	stderr *os.File
-	flags  *flag.FlagSet
+	flags *flag.FlagSet
 }
 
 func (t *tool) run(args []string) error {
@@ -93,14 +86,14 @@ func (t *tool) run(args []string) error {
 }
 
 func (t *tool) commands(reason string) {
-	fmt.Fprintf(t.stderr, "%s. Available commands:\n", reason)
-	fmt.Fprintf(t.stderr, "    tars        List active and inactive TAR files\n")
-	fmt.Fprintf(t.stderr, "    entries     List the entries of a TAR file\n")
-	fmt.Fprintf(t.stderr, "    segments    List the IDs of the segments in a TAR file\n")
-	fmt.Fprintf(t.stderr, "    segment     Print the content of a segment\n")
-	fmt.Fprintf(t.stderr, "    index       Print the content of a TAR index\n")
-	fmt.Fprintf(t.stderr, "    graph       Print the content of a TAR graph\n")
-	fmt.Fprintf(t.stderr, "    binaries    Print the content of a TAR binary index\n")
+	fmt.Fprintf(os.Stderr, "%s. Available commands:\n", reason)
+	fmt.Fprintf(os.Stderr, "    tars        List active and inactive TAR files\n")
+	fmt.Fprintf(os.Stderr, "    entries     List the entries of a TAR file\n")
+	fmt.Fprintf(os.Stderr, "    segments    List the IDs of the segments in a TAR file\n")
+	fmt.Fprintf(os.Stderr, "    segment     Print the content of a segment\n")
+	fmt.Fprintf(os.Stderr, "    index       Print the content of a TAR index\n")
+	fmt.Fprintf(os.Stderr, "    graph       Print the content of a TAR graph\n")
+	fmt.Fprintf(os.Stderr, "    binaries    Print the content of a TAR binary index\n")
 }
 
 func (t *tool) tars(args []string) error {
@@ -114,27 +107,27 @@ func (t *tool) tars(args []string) error {
 	if t.nArgs() > 0 {
 		directory = t.arg(0)
 	}
-	return printTars(directory, *all, t.stdout)
+	return printTars(directory, *all, os.Stdout)
 }
 
 func (t *tool) entries(args []string) error {
 	t.initFlags("entries", "file")
 	t.parseFlags(args)
 	if t.nArgs() != 1 {
-		fmt.Fprintln(t.stderr, "Invalid number of arguments")
+		fmt.Fprintln(os.Stderr, "Invalid number of arguments")
 		return nil
 	}
-	return printEntries(t.arg(0), t.stdout)
+	return printEntries(t.arg(0), os.Stdout)
 }
 
 func (t *tool) segments(args []string) error {
 	t.initFlags("segments", "file")
 	t.parseFlags(args)
 	if t.nArgs() != 1 {
-		fmt.Fprintln(t.stderr, "Invalid number of arguments")
+		fmt.Fprintln(os.Stderr, "Invalid number of arguments")
 		return nil
 	}
-	return printSegments(t.arg(0), t.stdout)
+	return printSegments(t.arg(0), os.Stdout)
 }
 
 func (t *tool) segment(args []string) error {
@@ -142,10 +135,10 @@ func (t *tool) segment(args []string) error {
 	f := t.formatFlag("format", "Output format (text, hex)")
 	t.parseFlags(args)
 	if t.nArgs() != 2 {
-		fmt.Fprintln(t.stderr, "Invalid number of arguments")
+		fmt.Fprintln(os.Stderr, "Invalid number of arguments")
 		return nil
 	}
-	return printSegment(t.arg(0), t.arg(1), *f, t.stdout)
+	return printSegment(t.arg(0), t.arg(1), *f, os.Stdout)
 }
 
 func (t *tool) index(args []string) error {
@@ -153,10 +146,10 @@ func (t *tool) index(args []string) error {
 	f := t.formatFlag("format", "Output format (text, hex)")
 	t.parseFlags(args)
 	if t.nArgs() != 1 {
-		fmt.Fprintln(t.stderr, "Invalid number of arguments")
+		fmt.Fprintln(os.Stderr, "Invalid number of arguments")
 		return nil
 	}
-	return printIndex(t.arg(0), *f, t.stdout)
+	return printIndex(t.arg(0), *f, os.Stdout)
 }
 
 func (t *tool) graph(args []string) error {
@@ -164,10 +157,10 @@ func (t *tool) graph(args []string) error {
 	f := t.formatFlag("format", "Output format (text, hex)")
 	t.parseFlags(args)
 	if t.nArgs() != 1 {
-		fmt.Fprintln(t.stderr, "Invalid number of arguments")
+		fmt.Fprintln(os.Stderr, "Invalid number of arguments")
 		return nil
 	}
-	return printGraph(t.arg(0), *f, t.stdout)
+	return printGraph(t.arg(0), *f, os.Stdout)
 }
 
 func (t *tool) binaries(args []string) error {
@@ -175,17 +168,17 @@ func (t *tool) binaries(args []string) error {
 	f := t.formatFlag("format", "Output format (text, hex)")
 	t.parseFlags(args)
 	if t.nArgs() != 1 {
-		fmt.Fprintln(t.stderr, "Invalid number of arguments")
+		fmt.Fprintln(os.Stderr, "Invalid number of arguments")
 		return nil
 	}
-	return printBinaries(t.arg(0), *f, t.stdout)
+	return printBinaries(t.arg(0), *f, os.Stdout)
 }
 
 func (t *tool) initFlags(cmd, usage string) {
 	t.flags = flag.NewFlagSet(cmd, flag.ContinueOnError)
-	t.flags.SetOutput(t.stderr)
+	t.flags.SetOutput(os.Stderr)
 	t.flags.Usage = func() {
-		fmt.Fprintf(t.stderr, "Usage: %s %s [-help] %s\n", programName, cmd, usage)
+		fmt.Fprintf(os.Stderr, "Usage: %s %s [-help] %s\n", programName, cmd, usage)
 		t.flags.PrintDefaults()
 	}
 }
