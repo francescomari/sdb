@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 type format int
 
 const (
@@ -33,4 +35,8 @@ func (f *format) Set(s string) error {
 		return fmt.Errorf("Invalid format '%s'", s)
 	}
 	return nil
+}
+
+func (f *format) Type() string {
+	return "format"
 }

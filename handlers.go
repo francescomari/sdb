@@ -21,6 +21,12 @@ func invalidFormat() handler {
 	}
 }
 
+func doPrintTo(w io.Writer) func(n string) {
+	return func(n string) {
+		fmt.Fprintf(w, n)
+	}
+}
+
 func doPrintBinaries(f format, w io.Writer) handler {
 	switch f {
 	case formatHex:
