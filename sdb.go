@@ -13,7 +13,33 @@ const (
 
 func main() {
 	var t tool
-	if err := t.run(os.Args); err != nil {
+	if len(os.Args) < 2 {
+		t.commands("No command specified")
+		os.Exit(1)
+	}
+	cmd := os.Args[1]
+	var fn func([]string) error
+	switch cmd {
+	case "tars":
+		fn = t.tars
+	case "entries":
+		fn = t.entries
+	case "segments":
+		fn = t.segments
+	case "segment":
+		fn = t.segment
+	case "index":
+		fn = t.index
+	case "graph":
+		fn = t.graph
+	case "binaries":
+		fn = t.binaries
+	}
+	if fn == nil {
+		t.commands(fmt.Sprintf("Invalid command '%s'", cmd))
+		os.Exit(1)
+	}
+	if err := fn(os.Args[2:]); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
@@ -56,33 +82,6 @@ func (f *format) Set(s string) error {
 
 type tool struct {
 	flags *flag.FlagSet
-}
-
-func (t *tool) run(args []string) error {
-	if len(args) < 2 {
-		t.commands("No command specified")
-		return nil
-	}
-	cmd, args := args[1], args[2:]
-	switch cmd {
-	case "tars":
-		return t.tars(args)
-	case "entries":
-		return t.entries(args)
-	case "segments":
-		return t.segments(args)
-	case "segment":
-		return t.segment(args)
-	case "index":
-		return t.index(args)
-	case "graph":
-		return t.graph(args)
-	case "binaries":
-		return t.binaries(args)
-	default:
-		t.commands(fmt.Sprintf("Invalid command '%s'", cmd))
-	}
-	return nil
 }
 
 func (t *tool) commands(reason string) {
