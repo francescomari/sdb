@@ -100,7 +100,7 @@ func newSegmentsCommand() *cobra.Command {
 }
 
 func newSegmentCommand() *cobra.Command {
-	var f format
+	f := formatText
 	cmd := &cobra.Command{
 		Use:   "segment file id",
 		Short: "Prints the identifiers of the segments from the specified TAR file.",
@@ -124,7 +124,7 @@ func newSegmentCommand() *cobra.Command {
 }
 
 func newIndexCommand() *cobra.Command {
-	var f format
+	f := formatText
 	cmd := &cobra.Command{
 		Use:   "index",
 		Short: "Prints the index from the specified TAR file",
@@ -148,7 +148,7 @@ func newIndexCommand() *cobra.Command {
 }
 
 func newGraphCommand() *cobra.Command {
-	var f format
+	f := formatText
 	cmd := &cobra.Command{
 		Use:   "graph",
 		Short: "Prints the graph from the specified TAR file",
@@ -172,7 +172,7 @@ func newGraphCommand() *cobra.Command {
 }
 
 func newBinariesCommand() *cobra.Command {
-	var f format
+	f := formatText
 	cmd := &cobra.Command{
 		Use:   "binaries",
 		Short: "Prints the index of binary references from the specified TAR file",
@@ -193,4 +193,31 @@ func newBinariesCommand() *cobra.Command {
 	}
 	cmd.Flags().Var(&f, "format", "Output format (text, hex)")
 	return cmd
+}
+
+type format string
+
+const (
+	formatText format = "text"
+	formatHex  format = "hex"
+)
+
+func (f *format) String() string {
+	return string(*f)
+}
+
+func (f *format) Set(s string) error {
+	switch format(s) {
+	case formatHex:
+		*f = formatHex
+	case formatText:
+		*f = formatText
+	default:
+		return fmt.Errorf("Invalid format '%s'", s)
+	}
+	return nil
+}
+
+func (f *format) Type() string {
+	return "format"
 }
