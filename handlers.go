@@ -70,7 +70,7 @@ func doPrintGraphTo(w io.Writer) handler {
 	return func(_ string, r io.Reader) error {
 		var gph graph.Graph
 		if _, err := gph.ReadFrom(r); err != nil {
-			return nil
+			return err
 		}
 		for _, e := range gph.Entries {
 			for _, r := range e.References {
