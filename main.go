@@ -84,15 +84,15 @@ func newSegmentsCommand() *cobra.Command {
 		Short: "Prints the identifiers of the segments from the specified TAR file.",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) > 1 {
-				fmt.Fprintf(os.Stderr, "Too many arguments.\n")
+				fmt.Fprintln(os.Stderr, "Too many arguments.")
 				os.Exit(1)
 			}
 			if len(args) < 1 {
-				fmt.Fprintln(os.Stderr, "Too few arguments.\n")
+				fmt.Fprintln(os.Stderr, "Too few arguments.")
 				os.Exit(1)
 			}
 			if err := forEachMatchingEntry(args[0], isAnySegment, doPrintSegmentNameTo(os.Stdout)); err != nil {
-				fmt.Fprintln(os.Stderr, "Unable to print segment IDs: %v.\n", err)
+				fmt.Fprintf(os.Stderr, "Unable to print segment IDs: %v.\n", err)
 				os.Exit(1)
 			}
 		},
@@ -130,11 +130,11 @@ func newIndexCommand() *cobra.Command {
 		Short: "Prints the index from the specified TAR file",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) > 1 {
-				fmt.Fprintf(os.Stderr, "Too many arguments.\n")
+				fmt.Fprintln(os.Stderr, "Too many arguments.")
 				os.Exit(1)
 			}
 			if len(args) < 1 {
-				fmt.Fprintln(os.Stderr, "Too few arguments.\n")
+				fmt.Fprintln(os.Stderr, "Too few arguments.")
 				os.Exit(1)
 			}
 			if err := onMatchingEntry(args[0], isIndex, doPrintIndex(f, os.Stdout)); err != nil {
@@ -154,11 +154,11 @@ func newGraphCommand() *cobra.Command {
 		Short: "Prints the graph from the specified TAR file",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) > 1 {
-				fmt.Fprintf(os.Stderr, "Too many arguments.\n")
+				fmt.Fprintln(os.Stderr, "Too many arguments.")
 				os.Exit(1)
 			}
 			if len(args) < 1 {
-				fmt.Fprintln(os.Stderr, "Too few arguments.\n")
+				fmt.Fprintln(os.Stderr, "Too few arguments.")
 				os.Exit(1)
 			}
 			if err := onMatchingEntry(args[0], isGraph, doPrintGraph(f, os.Stdout)); err != nil {
@@ -178,15 +178,15 @@ func newBinariesCommand() *cobra.Command {
 		Short: "Prints the index of binary references from the specified TAR file",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) > 1 {
-				fmt.Fprintf(os.Stderr, "Too many arguments.\n")
+				fmt.Fprintln(os.Stderr, "Too many arguments.")
 				os.Exit(1)
 			}
 			if len(args) < 1 {
-				fmt.Fprintln(os.Stderr, "Too few arguments.\n")
+				fmt.Fprintln(os.Stderr, "Too few arguments.")
 				os.Exit(1)
 			}
 			if err := onMatchingEntry(args[0], isBinary, doPrintBinaries(f, os.Stdout)); err != nil {
-				fmt.Fprintln(os.Stderr, "Unable to print the index of binary references: %v.\n", err)
+				fmt.Fprintf(os.Stderr, "Unable to print the index of binary references: %v.\n", err)
 				os.Exit(1)
 			}
 		},
