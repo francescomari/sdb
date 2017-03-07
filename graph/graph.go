@@ -108,15 +108,21 @@ func (graph *Graph) parseFrom(data []byte) error {
 
 	for i := 0; i < nEntries; i++ {
 		var entry Entry
-		entry.parseFrom(buffer)
+		if err := entry.parseFrom(buffer); err != nil {
+			return fmt.Errorf("unable to read entry: %s", err)
+		}
 		graph.Entries = append(graph.Entries, entry)
 	}
 
 	return nil
 }
 
-func (entry *Entry) parseFrom(b *bytes.Buffer) {
+func (entry *Entry) parseFrom(b *bytes.Buffer) error {
 	data := b.Next(keySize)
+
+	if len(data) < keySize {
+		return fmt.Errorf("not enough data")
+	}
 
 	entry.Msb = binary.BigEndian.Uint64(data[entryMsbOffset:])
 	entry.Lsb = binary.BigEndian.Uint64(data[entryLsbOffset:])
@@ -125,14 +131,24 @@ func (entry *Entry) parseFrom(b *bytes.Buffer) {
 
 	for i := 0; i < n; i++ {
 		var reference Reference
-		reference.parseFrom(b)
+		if err := reference.parseFrom(b); err != nil {
+			return fmt.Errorf("unable to read reference: %s", err)
+		}
 		entry.References = append(entry.References, reference)
 	}
+
+	return nil
 }
 
-func (reference *Reference) parseFrom(b *bytes.Buffer) {
+func (reference *Reference) parseFrom(b *bytes.Buffer) error {
 	data := b.Next(valueSize)
+
+	if len(data) < valueSize {
+		return fmt.Errorf("not enough data")
+	}
 
 	reference.Msb = binary.BigEndian.Uint64(data[referenceMsbOffset:])
 	reference.Lsb = binary.BigEndian.Uint64(data[referenceLsbOffset:])
+
+	return nil
 }
