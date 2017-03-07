@@ -9,7 +9,6 @@ import (
 
 func main() {
 	if err := newRootCommand().Execute(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v", err)
 		os.Exit(1)
 	}
 }
