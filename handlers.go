@@ -100,7 +100,7 @@ func doPrintIndexTo(w io.Writer) handler {
 		}
 		for _, e := range idx.Entries {
 			id := segmentID(e.Msb, e.Lsb)
-			fmt.Fprintf(w, "%s %s %x %d %d\n", segmentType(id), id, e.Position, e.Size, e.Generation)
+			fmt.Fprintf(w, "%s %s %x %d %d %d %v\n", segmentType(id), id, e.Position, e.Size, e.Generation, e.FullGeneration, e.Compacted)
 		}
 		return nil
 	}

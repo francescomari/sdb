@@ -144,19 +144,19 @@ It is possible to access a hexdump of the index by using the `-format` flag.
 
 ```
 $ sdb index data00000a.tar | head
-data 80120c8f7d984b81a9cda2b4aeaf5686 5de8a00 262112 0
-data 8017fadcca4e4398a92efb64f0c41b19 241800 262096 0
-data 828439805d274f4ea982fd8e93bcc1d1 4fa8e00 250192 0
-data 83019b303a8a4c1aa20cbad77aab559a 54ffc00 262112 0
-data 83c7fcb87cdf428faa2838b8d81dc2a3 51a5c00 262112 0
-data 83e08e3c8eba497bacdb9c6fb10c8785 59aa800 261072 0
-data 84703034cf834936ad206d11b9773a3d 2ddd800 257648 0
-data 85837008c5624164a6268d76b00f6bab 1c9a800 258160 0
-data 8633a21403c44cd0a026ec233cc683be 438da00 262096 0
-data 86a132a870cc4a83addf449c4ec404b8 4904800 262096 0
+data 8245f4af69004b43a515702de7b4bb6c 250ae00 260288 1 1 true
+data 828f93be74ed42c8a3b905df647ec98d 5818c00 261152 1 1 true
+data 82ec9d19f8104d00a3184f37b8ebe10c 512ea00 262112 1 1 true
+data 82fa1280b6a840b9a9e7ddb225a9d15f 42dfc00 262144 1 1 true
+data 832ee6e5845c4251a350c46a8183ee08 565e600 261648 1 1 true
+data 8339041d299e46c7af4394dfe363488c 51ec600 260144 1 1 true
+data 8609f2ef278a4509a0ff0abe53b0ff3f 1ba6200 250288 1 1 true
+data 867dfe8c65ef4affa291b334f66a0f63 4a44400 262144 1 1 true
+data 8721a140ab2145e3a8297d702ed2a680 2dac200 259952 1 1 true
+data 888317fc0d0a48afa3a2230a275c5756 200 258256 1 1 true
 ```
 
-The output shows the following columns: the type of the segment, the segment ID, the hexadecimal offset of the segment in the TAR file, the size of the segment, and its generation.
+The output shows the following columns: the type of the segment, the segment ID, the hexadecimal offset of the segment in the TAR file, the size of the segment, the generation, the full generation and the compacted flag.
 
 ## Show the content of the graph
 
