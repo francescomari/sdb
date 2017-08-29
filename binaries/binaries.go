@@ -8,10 +8,14 @@ import (
 	"io"
 )
 
+// Binaries is the set of binary references in a TAR files grouped by generation
+// and segment.
 type Binaries struct {
 	Generations []Generation
 }
 
+// Generation is the set of binary references belonging to a specific
+// generation. The binary references are grouped by segment.
 type Generation struct {
 	Generation     int
 	FullGeneration int
@@ -19,12 +23,15 @@ type Generation struct {
 	Segments       []Segment
 }
 
+// Segment is the set of binary references belonging to a specific segment.
 type Segment struct {
 	Msb        uint64
 	Lsb        uint64
 	References []string
 }
 
+// ReadFrom reads the binary references from its serialized representation.
+// Returns the number of bytes read and an optional error.
 func (binaries *Binaries) ReadFrom(r io.Reader) (int64, error) {
 	var b bytes.Buffer
 
