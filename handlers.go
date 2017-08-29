@@ -23,7 +23,7 @@ func invalidFormat() handler {
 
 func doPrintTo(w io.Writer) func(n string) {
 	return func(n string) {
-		fmt.Fprintf(w, n)
+		fmt.Fprintln(w, n)
 	}
 }
 
