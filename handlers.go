@@ -133,6 +133,8 @@ func doPrintSegmentTo(w io.Writer) handler {
 		}
 		fmt.Fprintf(w, "version %d\n", s.Version)
 		fmt.Fprintf(w, "generation %d\n", s.Generation)
+		fmt.Fprintf(w, "fullGeneration %d\n", s.FullGeneration)
+		fmt.Fprintf(w, "compacted %v\n", s.Compacted)
 		for i, r := range s.References {
 			fmt.Fprintf(w, "reference %d %s\n", i+1, segmentID(r.Msb, r.Lsb))
 		}

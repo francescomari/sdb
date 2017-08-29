@@ -7,39 +7,14 @@ import (
 	"io"
 )
 
-const (
-	headerSize      = 32
-	headerMagic     = "0aK"
-	headerMagicSize = 3
-	referenceSize   = 16
-	recordSize      = 9
-)
-
-const (
-	headerMagicOffset          = 0
-	headerVersionOffset        = 3
-	headerGenerationOffet      = 10
-	headerReferenceCountOffset = 14
-	headerRecordCountOffset    = 18
-)
-
-const (
-	referenceMsbOffset = 0
-	referenceLsbOffset = 8
-)
-
-const (
-	recordNumberOffset = 0
-	recordTypeOffset   = 4
-	recordOffsetOffset = 5
-)
-
 // A Segment is a container for records.
 type Segment struct {
-	Version    int
-	Generation int
-	References []Reference
-	Records    []Record
+	Version        int
+	Generation     int
+	FullGeneration int
+	Compacted      bool
+	References     []Reference
+	Records        []Record
 }
 
 // A Reference represents a link towards another segment.
@@ -93,7 +68,57 @@ func (segment *Segment) ReadFrom(reader io.Reader) (int64, error) {
 	return n, segment.parseFrom(buffer.Bytes())
 }
 
+const (
+	v12 = 12
+	v13 = 13
+)
+
 func (segment *Segment) parseFrom(data []byte) error {
+	if len(data) < 4 {
+		return fmt.Errorf("invalid data")
+	}
+
+	version := data[3]
+
+	if version == v12 {
+		return segment.parsev12From(data)
+	}
+	if version == v13 {
+		return segment.parsev13From(data)
+	}
+
+	return fmt.Errorf("invalid version %02x", version)
+}
+
+func (segment *Segment) parsev12From(data []byte) error {
+	const (
+		headerSize      = 32
+		headerMagic     = "0aK"
+		headerVersion   = v12
+		headerMagicSize = 3
+		referenceSize   = 16
+		recordSize      = 9
+	)
+
+	const (
+		headerMagicOffset          = 0
+		headerVersionOffset        = 3
+		headerGenerationOffet      = 10
+		headerReferenceCountOffset = 14
+		headerRecordCountOffset    = 18
+	)
+
+	const (
+		referenceMsbOffset = 0
+		referenceLsbOffset = 8
+	)
+
+	const (
+		recordNumberOffset = 0
+		recordTypeOffset   = 4
+		recordOffsetOffset = 5
+	)
+
 	if len(data) < headerSize {
 		return fmt.Errorf("Segment too small")
 	}
@@ -114,29 +139,108 @@ func (segment *Segment) parseFrom(data []byte) error {
 		return fmt.Errorf("Invalid size or segment header")
 	}
 
+	if version != headerVersion {
+		return fmt.Errorf("invalid version %02x", version)
+	}
+
 	segment.Generation = generation
+	segment.FullGeneration = generation
+	segment.Compacted = true
 	segment.Version = version
 	segment.References = make([]Reference, nreferences)
 	segment.Records = make([]Record, nrecords)
 
 	for i := range segment.References {
-		segment.References[i].parseFrom(data[headerSize+i*referenceSize:])
+		referenceData := data[headerSize+i*referenceSize:]
+		segment.References[i].Msb = binary.BigEndian.Uint64(referenceData[referenceMsbOffset:])
+		segment.References[i].Lsb = binary.BigEndian.Uint64(referenceData[referenceLsbOffset:])
 	}
 
 	for i := range segment.Records {
-		segment.Records[i].parseFrom(data[headerSize+nreferences*referenceSize+i*recordSize:])
+		recordData := data[headerSize+nreferences*referenceSize+i*recordSize:]
+		segment.Records[i].Number = int(binary.BigEndian.Uint32(recordData[recordNumberOffset:]))
+		segment.Records[i].Type = RecordType(recordData[recordTypeOffset])
+		segment.Records[i].Offset = int(binary.BigEndian.Uint32(recordData[recordOffsetOffset:]))
 	}
 
 	return nil
 }
 
-func (reference *Reference) parseFrom(data []byte) {
-	reference.Msb = binary.BigEndian.Uint64(data[referenceMsbOffset:])
-	reference.Lsb = binary.BigEndian.Uint64(data[referenceLsbOffset:])
-}
+func (segment *Segment) parsev13From(data []byte) error {
+	const (
+		headerSize      = 32
+		headerMagic     = "0aK"
+		headerVersion   = v13
+		headerMagicSize = 3
+		referenceSize   = 16
+		recordSize      = 9
+	)
 
-func (record *Record) parseFrom(data []byte) {
-	record.Number = int(binary.BigEndian.Uint32(data[recordNumberOffset:]))
-	record.Type = RecordType(data[recordTypeOffset])
-	record.Offset = int(binary.BigEndian.Uint32(data[recordOffsetOffset:]))
+	const (
+		headerMagicOffset          = 0
+		headerVersionOffset        = 3
+		headerFullGenerationOffset = 4
+		headerGenerationOffset     = 10
+		headerReferenceCountOffset = 14
+		headerRecordCountOffset    = 18
+	)
+
+	const (
+		referenceMsbOffset = 0
+		referenceLsbOffset = 8
+	)
+
+	const (
+		recordNumberOffset = 0
+		recordTypeOffset   = 4
+		recordOffsetOffset = 5
+	)
+
+	if len(data) < headerSize {
+		return fmt.Errorf("Segment too small")
+	}
+
+	var (
+		magic          = string(data[headerMagicOffset : headerMagicOffset+headerMagicSize])
+		version        = int(data[headerVersionOffset])
+		fullGeneration = int(binary.BigEndian.Uint32(data[headerFullGenerationOffset:]) & 0x7fffffff)
+		compacted      = (data[headerFullGenerationOffset] & 0x80) != 0
+		generation     = int(binary.BigEndian.Uint32(data[headerGenerationOffset:]))
+		nreferences    = int(binary.BigEndian.Uint32(data[headerReferenceCountOffset:]))
+		nrecords       = int(binary.BigEndian.Uint32(data[headerRecordCountOffset:]))
+	)
+
+	if magic != headerMagic {
+		return fmt.Errorf("Invalid magic")
+	}
+
+	if len(data) < headerSize+nreferences*referenceSize+nrecords*recordSize {
+		return fmt.Errorf("Invalid size or segment header")
+	}
+
+	if version != headerVersion {
+		return fmt.Errorf("invalid version %02x", version)
+	}
+
+	segment.Generation = generation
+	segment.FullGeneration = fullGeneration
+	segment.Compacted = compacted
+	segment.Version = version
+	segment.References = make([]Reference, nreferences)
+	segment.Records = make([]Record, nrecords)
+
+	for i := range segment.References {
+		referenceData := data[headerSize+i*referenceSize:]
+		segment.References[i].Msb = binary.BigEndian.Uint64(referenceData[referenceMsbOffset:])
+		segment.References[i].Lsb = binary.BigEndian.Uint64(referenceData[referenceLsbOffset:])
+	}
+
+	for i := range segment.Records {
+		recordData := data[headerSize+nreferences*referenceSize+i*recordSize:]
+		segment.Records[i].Number = int(binary.BigEndian.Uint32(recordData[recordNumberOffset:]))
+		segment.Records[i].Type = RecordType(recordData[recordTypeOffset])
+		segment.Records[i].Offset = int(binary.BigEndian.Uint32(recordData[recordOffsetOffset:]))
+	}
+
+	return nil
 }

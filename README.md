@@ -109,8 +109,10 @@ It is possible to access a hexdump of the segment by using the `-format` flag.
 
 ```
 $ sdb segment data00000a.tar 0ce1d7f06f464753a42c2374852990c8
-version 12
-generation 0
+version 13
+generation 9
+fullGeneration 1
+compacted true
 reference 1 9bfa18e9bbd04ae2ab00451f185b17fe
 reference 2 195aa442cfbc4fbea1157288e94763ad
 ...
@@ -128,6 +130,11 @@ The following fields are supported:
 The version of the segment.
 * `generation`
 The generation this segment belongs to.
+* `fullGeneration`
+The full generation this segment belongs to.
+* `compacted`
+Indicates if this segment was created as part of a compaction operations.
+This fields assumes only the values `true` or `false`.
 * `reference`
 A multi-value field containing references to other segments.
 For every reference, its number and the corresponding segment is shown.
