@@ -190,15 +190,15 @@ It is possible to access a hexdump of the binary references index by using the `
 
 ```
 $ sdb binaries -format text data00000a.tar | head -n 5
-0 12c552d1d67f4b4fa22a61c5818286a2 f20cc9f7902d6facdd7a9e260dc686d144de5ca3#108232
-0 12c552d1d67f4b4fa22a61c5818286a2 4ab8c9485e1c13410eb684863f333414e0e2973d#37470
-0 45ef53df2d094fcea8336b1fdc7c3e49 360636479c1c3b1b47d2174d4432224fc6193ed4#22090
-0 45ef53df2d094fcea8336b1fdc7c3e49 9e56c46ff9b64986f491c53e0f625fa1fd26daff#84533
-0 5666923c93a54d21a9a36cb3372a890b dab128f67d237c980e5770ee045c38e36afa1327#19764
+0 0 false 12c552d1d67f4b4fa22a61c5818286a2 f20cc9f7902d6facdd7a9e260dc686d144de5ca3#108232
+0 0 false 12c552d1d67f4b4fa22a61c5818286a2 4ab8c9485e1c13410eb684863f333414e0e2973d#37470
+0 0 false 45ef53df2d094fcea8336b1fdc7c3e49 360636479c1c3b1b47d2174d4432224fc6193ed4#22090
+0 0 false 45ef53df2d094fcea8336b1fdc7c3e49 9e56c46ff9b64986f491c53e0f625fa1fd26daff#84533
+0 0 false 5666923c93a54d21a9a36cb3372a890b dab128f67d237c980e5770ee045c38e36afa1327#19764
 ```
 
 The output shows a list of external binary references.
-Every line contains the generation of the segment, the segment ID and the identifier of the binary reference.
-The example above shows only segments of generation `0`.
+Every line contains the generation of the segment, the full generation of the segment, if the segment was created by a compaction operation, the segment ID and the identifier of the binary reference.
+The example above shows only segments of generation `0`, full generation `0`, created by a user-generated commit.
 One of those segments is `12c552d1...`.
 This segment has two references to the binaries identified by `f20cc9f7...` and `4ab8c948...`.

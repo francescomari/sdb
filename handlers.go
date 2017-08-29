@@ -47,7 +47,7 @@ func doPrintBinariesTo(w io.Writer) handler {
 		for _, g := range bns.Generations {
 			for _, s := range g.Segments {
 				for _, r := range s.References {
-					fmt.Fprintf(w, "%d %s %s\n", g.Generation, segmentID(s.Msb, s.Lsb), r)
+					fmt.Fprintf(w, "%d %d %v %s %s\n", g.Generation, g.FullGeneration, g.Compacted, segmentID(s.Msb, s.Lsb), r)
 				}
 			}
 		}
