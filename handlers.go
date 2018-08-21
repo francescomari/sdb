@@ -7,10 +7,10 @@ import (
 	"io"
 	"strings"
 
-	"github.com/francescomari/sdb/binaries"
-	"github.com/francescomari/sdb/graph"
-	"github.com/francescomari/sdb/index"
-	"github.com/francescomari/sdb/segment"
+	"./binaries"
+	"./graph"
+	"./index"
+	"./segment"
 )
 
 var errInvalidFormat = errors.New("Invalid format")
