@@ -2,15 +2,15 @@
 
 The Segment Debugger is a collection of utilities to inspect a repository created by the [Segment Store](http://jackrabbit.apache.org/oak/docs/nodestore/segment/overview.html), a component in [Apache Jackrabbit Oak](http://jackrabbit.apache.org/oak/).
 
-## Installing
+## Building
 
-To start using the Segment Debugger, install Go and run 'go get' as shown below.
+To start using the Segment Debugger, clone this repository and build the project.
 
 ```
-$ go get -u github.com/francescomari/sdb
+$ go build
 ```
 
-This will retrieve the library and install the `sdb` command line utility into your `$GOBIN` path.
+This will create an executable `sdb` in the project directory.
 
 ## List TAR files
 
